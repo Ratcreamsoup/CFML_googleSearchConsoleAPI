@@ -16,4 +16,4 @@
 *.rtf	 diff=astextplain
 *.RTF	 diff=astextplain
 
-googlesearch/lib/* linguist-vendored=false
+googlesearch/lib/* linguist-vendored
