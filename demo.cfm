@@ -13,7 +13,6 @@
 	variables.objGoogle.buildWebmaster();
 
 	variables.arrDimensions = ["date","page"];
-	variables.arrDimensions = ["query"];
 	
 	variables.strFirst = "-681325/";
 	variables.strSecond = "-154107/"; 	
