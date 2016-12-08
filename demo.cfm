@@ -7,8 +7,9 @@
 		.init(
 			libDir=variables.libDir,
 			keyFile=variables.keyFile,
-			javaLoader=variables.javaLoader,
-			appName='SearchConsoleTest'
+			javaLoader=variables.javaLoader,			
+			appName='SearchConsoleTest',
+			disableRequestTimeout=true	
 		);
 	variables.objGoogle.buildWebmaster();
 
