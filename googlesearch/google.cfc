@@ -5,6 +5,7 @@
 		<cfargument name="keyFile" type="string" required="true" />
 		<cfargument name="appName" type="string" required="false" default="SearchConsole" />
 		<cfargument name="javaLoader" type="string" required="false" default="javaloader.JavaLoader" />
+		<cfargument name="disableRequestTimeout" type="boolean" required="false" default="false" />
 		<cfscript>
 			var local = structNew();
 			local.objLoader 					= getGoogleLoader(javaLoader=arguments.javaLoader,libDir=arguments.libDir);						
@@ -12,7 +13,6 @@
 			variables.keyFile 					= arguments.keyFile;
 			
 			variables.JSON_Factory             	= local.objLoader.create("com.google.api.client.json.jackson2.JacksonFactory").init();			
-			variables.HTTP_Request_Initializer 	= local.objLoader.create("com.google.api.client.http.HttpRequestInitializer");
 			variables.WebmasterScopes 			= local.objLoader.create("com.google.api.services.webmasters.WebmastersScopes");
 			variables.SAQueryRequest			= local.objLoader.create("com.google.api.services.webmasters.model.SearchAnalyticsQueryRequest");
 			variables.objFilterGroup 			= local.objLoader.create("com.google.api.services.webmasters.model.ApiDimensionFilterGroup");
@@ -25,10 +25,16 @@
 				.build();			
 			
 			variables.Collections				= createObject("java", "java.util.Collections");
-			variables.WebmastersBuilder 		= local.objLoader.create("com.google.api.services.webmasters.Webmasters$Builder").init(
+			
+			if (arguments.disableRequestTimeout) {				
+				variables.WebmastersBuilder 	= local.objLoader.create("com.google.api.services.webmasters.Webmasters$Builder").init(
+			     variables.HTTP_Transport, 
+			     variables.JSON_Factory, local.objLoader.create("com.google.api.client.http.DisableTimeout"));
+			} else {
+				variables.WebmastersBuilder 	= local.objLoader.create("com.google.api.services.webmasters.Webmasters$Builder").init(
 			     variables.HTTP_Transport, 
 			     variables.JSON_Factory, javaCast("null", ""));
-			
+			}
 			return this;
 		</cfscript>
 	</cffunction>
@@ -184,7 +190,7 @@
 		<cfargument name="libDir" type="string" required="true" />
 		<cfscript>
 			var local = structNew();
-			local.strLoaderUUID = "20efe785-591b-41d1-adc3-29924ed5bef7";
+			local.strLoaderUUID = "21efe785-591b-41d1-adc3-29924ed5bef8";
 			if (structKeyExists(SERVER,local.strLoaderUUID)) {
 				return SERVER[local.strLoaderUUID];
 			}
@@ -198,7 +204,8 @@
 				if (len(local.qJars.name[local.i]) && !ReFind('(^libs\-sources/|\-sources\.jar$)',local.qJars.name[local.i])) {
 					arrayAppend(local.arrJars,local.libPath & local.qJars.name[local.i]);
 				}
-			}			
+			}
+			arrayAppend(local.arrJars, getDirectoryFromPath(getCurrentTemplatePath()) & 'lib/DisableTimeout.jar');
             SERVER[local.strLoaderUUID] = createObject('component', arguments.javaLoader).init(local.arrJars,javacast('boolean',false));
             return SERVER[local.strLoaderUUID];
 		</cfscript>
