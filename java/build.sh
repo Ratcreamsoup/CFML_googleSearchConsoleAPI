@@ -2,6 +2,6 @@
 javac -classpath ../googlesearch/lib/webmasters/*:\
 ../googlesearch/lib/webmasters/libs/* \
 -d ./ \
-DisableTimeout.java
-jar cvf ../googlesearch/lib/DisableTimeout.jar com/google/api/client/http/DisableTimeout.class
+RequestInitializerWrapper.java
+jar cvf ../googlesearch/lib/RequestInitializerWrapper.jar com/google/api/client/http/RequestInitializerWrapper.class
 rm -r ./com

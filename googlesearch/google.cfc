@@ -17,24 +17,22 @@
 			variables.SAQueryRequest			= local.objLoader.create("com.google.api.services.webmasters.model.SearchAnalyticsQueryRequest");
 			variables.objFilterGroup 			= local.objLoader.create("com.google.api.services.webmasters.model.ApiDimensionFilterGroup");
 			variables.objFilter 				= local.objLoader.create("com.google.api.services.webmasters.model.ApiDimensionFilter");
-			variables.HTTP_Transport 			= local.objLoader.create("com.google.api.client.googleapis.javanet.GoogleNetHttpTransport").newTrustedTransport();
+			variables.HTTP_Transport 			= local.objLoader.create("com.google.api.client.googleapis.javanet.GoogleNetHttpTransport").newTrustedTransport();						
+			
+			variables.Collections				= createObject("java", "java.util.Collections");
+			
+			if (arguments.disableRequestTimeout) {
+				variables.HTTP_RequestInitWrapper	= local.objLoader.create("com.google.api.client.http.RequestInitializerWrapper");
+			}
 
 			variables.GoogleCredentialBuilder 	= local.objLoader.create("com.google.api.client.googleapis.auth.oauth2.GoogleCredential$Builder")
 				.setTransport(variables.HTTP_Transport)
 				.setJsonFactory(variables.JSON_Factory)    			
-				.build();			
-			
-			variables.Collections				= createObject("java", "java.util.Collections");
-			
-			if (arguments.disableRequestTimeout) {				
-				variables.WebmastersBuilder 	= local.objLoader.create("com.google.api.services.webmasters.Webmasters$Builder").init(
-			     variables.HTTP_Transport, 
-			     variables.JSON_Factory, local.objLoader.create("com.google.api.client.http.DisableTimeout"));
-			} else {
-				variables.WebmastersBuilder 	= local.objLoader.create("com.google.api.services.webmasters.Webmasters$Builder").init(
+				.build();
+
+			variables.WebmastersBuilder 	= local.objLoader.create("com.google.api.services.webmasters.Webmasters$Builder").init(
 			     variables.HTTP_Transport, 
 			     variables.JSON_Factory, javaCast("null", ""));
-			}
 			return this;
 		</cfscript>
 	</cffunction>
@@ -42,28 +40,30 @@
 	<cffunction name="buildWebmaster" access="public" output="false" returntype="struct" hint="creates webmaster object">
 		<cfscript>
 			var local 			= structNew();
-			local.structReturn 	= {success=true, error=""};
-
+			local.structReturn 	= {success=true, error=""};									
 			try {
 				local.keyFile 			= createObject("java", "java.io.File").init(variables.keyFile);
 	    		local.keyInputStream	= createObject("java", "java.io.FileInputStream").init(local.keyFile);     		    		
 	    		local.credential 		= variables.GoogleCredentialBuilder	    			
 	    			.fromStream(local.keyInputStream,variables.HTTP_Transport,variables.JSON_Factory)
 	    			.createScoped(variables.Collections.singleton(variables.WebmasterScopes.WEBMASTERS_READONLY));	    		
-	    		local.keyInputStream.close();	    		
+	    		local.keyInputStream.close();
+	    		if (structKeyExists(variables, 'HTTP_RequestInitWrapper')) {
+	    			local.credential = variables.HTTP_RequestInitWrapper.init(local.credential);
+	    		}
     		} catch (Any e) {
     			local.structReturn.success 	= false;
     			local.structReturn.error 	= "Credential Object Error: " & e.message & " - " & e.detail;
-    		}
+    		}    		
     		try {
 	    		variables.Webmasters 	= variables.WebmastersBuilder
 	    			.setApplicationName(variables.searchConsoleAppName)
-					.setHttpRequestInitializer(local.credential)
+					.setHttpRequestInitializer(local.credential)					
 					.build();
 			} catch (Any e) {
     			local.structReturn.success 	= false;
     			local.structReturn.error 	= "Webmasters Object Error: " & e.message & " - " & e.detail;
-    		}			
+    		}    		   		
 			return local.structReturn;
 		</cfscript>
 	</cffunction>
@@ -190,7 +190,7 @@
 		<cfargument name="libDir" type="string" required="true" />
 		<cfscript>
 			var local = structNew();
-			local.strLoaderUUID = "21efe785-591b-41d1-adc3-29924ed5bef8";
+			local.strLoaderUUID = "21efe785-531b-41d1-adc3-29924ed5bef9";
 			if (structKeyExists(SERVER,local.strLoaderUUID)) {
 				return SERVER[local.strLoaderUUID];
 			}
@@ -204,8 +204,8 @@
 				if (len(local.qJars.name[local.i]) && !ReFind('(^libs\-sources/|\-sources\.jar$)',local.qJars.name[local.i])) {
 					arrayAppend(local.arrJars,local.libPath & local.qJars.name[local.i]);
 				}
-			}
-			arrayAppend(local.arrJars, getDirectoryFromPath(getCurrentTemplatePath()) & 'lib/DisableTimeout.jar');
+			}			
+			arrayAppend(local.arrJars, getDirectoryFromPath(getCurrentTemplatePath()) & 'lib/RequestInitializerWrapper.jar');
             SERVER[local.strLoaderUUID] = createObject('component', arguments.javaLoader).init(local.arrJars,javacast('boolean',false));
             return SERVER[local.strLoaderUUID];
 		</cfscript>
